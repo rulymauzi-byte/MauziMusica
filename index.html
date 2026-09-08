@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mauzi Música" />
+  <meta name="description" content="Bibliotecas privadas por enlace para reproducir música desde Google Drive." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Mauzi Música</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-icon" aria-hidden="true">♫</div>
+        <div>
+          <h1 id="appTitle">Mauzi Música</h1>
+          <p>Bibliotecas de música por enlace</p>
+        </div>
+      </div>
+      <button id="installBtn" class="ghost-btn hidden" type="button">Instalar</button>
+    </header>
+
+    <main>
+      <section class="hero card" id="adminCard">
+        <div class="hero-copy">
+          <span class="eyebrow">ADMINISTRADOR</span>
+          <h2>Crear un acceso para cada coro</h2>
+          <p>Use el mismo Google Apps Script para todos. Cada coro recibe un enlace diferente y solo podrá ver la carpeta que usted haya autorizado.</p>
+        </div>
+
+        <form id="accessForm" class="admin-form">
+          <div class="field">
+            <label for="accessName">Nombre</label>
+            <input id="accessName" type="text" autocomplete="off" placeholder="Ejemplo: Coro Bethel" required />
+          </div>
+          <div class="field field-wide">
+            <label for="folderUrl">Carpeta de Google Drive</label>
+            <input id="folderUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://drive.google.com/drive/folders/..." required />
+          </div>
+          <div class="field">
+            <label for="adminKey">Clave de administrador</label>
+            <input id="adminKey" type="password" autocomplete="current-password" placeholder="Su clave privada" required />
+          </div>
+          <button class="primary-btn admin-submit" type="submit">Crear acceso</button>
+        </form>
+
+        <div class="source-actions">
+          <button id="manageBtn" class="text-btn" type="button">Ver accesos creados</button>
+          <span id="sourceStatus" class="status-text" aria-live="polite"></span>
+        </div>
+
+        <div id="managerPanel" class="manager-panel hidden">
+          <div class="manager-head">
+            <strong>Accesos creados</strong>
+            <button id="refreshSharesBtn" class="icon-btn" type="button" aria-label="Actualizar accesos">↻</button>
+          </div>
+          <div id="shareList" class="share-list"></div>
+        </div>
+      </section>
+
+      <section id="viewerCard" class="viewer-card card hidden">
+        <div>
+          <span class="eyebrow">BIBLIOTECA COMPARTIDA</span>
+          <h2 id="viewerName">Música</h2>
+          <p>Este enlace muestra únicamente la biblioteca asignada.</p>
+        </div>
+      </section>
+
+      <section id="librarySection" class="library-layout hidden" aria-live="polite">
+        <section class="library card">
+          <div class="library-head">
+            <div>
+              <span class="eyebrow">BIBLIOTECA</span>
+              <h2 id="folderName">Música</h2>
+              <p><span id="trackCount">0</span> canciones</p>
+            </div>
+            <div class="library-actions">
+              <button id="shareBtn" class="library-btn" type="button" title="Copiar este enlace">Compartir enlace</button>
+              <button id="reloadBtn" class="icon-btn" type="button" title="Actualizar" aria-label="Actualizar biblioteca">↻</button>
+            </div>
+          </div>
+
+          <div class="folder-tools">
+            <div id="folderNav" class="folder-nav" aria-label="Carpetas de música"></div>
+            <button id="playFolderBtn" class="play-folder-btn" type="button">▶ Reproducir carpeta</button>
+          </div>
+
+          <div class="search-wrap">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="Buscar canción..." autocomplete="off" />
+          </div>
+
+          <div id="trackList" class="track-list"></div>
+          <div id="emptyState" class="empty-state hidden">
+            <div class="empty-icon">♪</div>
+            <h3>No encontré canciones</h3>
+            <p>Revise que la carpeta autorizada tenga archivos de audio.</p>
+          </div>
+        </section>
+
+        <aside class="lyrics card" id="lyricsPanel">
+          <div class="lyrics-head">
+            <div class="lyrics-title-wrap">
+              <span class="eyebrow">LETRA</span>
+              <h2 id="lyricsTitle">Selecciona una canción</h2>
+            </div>
+            <div class="lyrics-actions">
+              <div class="font-controls" aria-label="Tamaño de letra">
+                <button id="lyricsSmallerBtn" type="button" aria-label="Reducir letra">A−</button>
+                <button id="lyricsSizeBtn" type="button" title="Restablecer tamaño">20</button>
+                <button id="lyricsLargerBtn" type="button" aria-label="Agrandar letra">A+</button>
+              </div>
+              <button id="closeLyricsBtn" class="icon-btn mobile-only" type="button" aria-label="Cerrar letra">×</button>
+            </div>
+          </div>
+          <div id="lyricsBody" class="lyrics-body">
+            <div class="lyrics-placeholder">
+              <div class="empty-icon">Aa</div>
+              <p>Agregue un archivo <strong>.txt</strong> con el mismo nombre de la canción para mostrar la letra completa.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <section id="player" class="player hidden" aria-label="Reproductor">
+    <div class="now-playing">
+      <div class="cover small" id="miniCover"><span>♫</span></div>
+      <div class="now-meta">
+        <strong id="nowTitle">Sin reproducción</strong>
+        <span id="nowAlbum">Mauzi Música</span>
+      </div>
+      <button id="lyricsBtn" class="mini-action" type="button" aria-label="Mostrar letra">Letra</button>
+    </div>
+
+    <div class="transport">
+      <div class="progress-row">
+        <span id="currentTime">0:00</span>
+        <input id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Posición de reproducción" />
+        <span id="duration">0:00</span>
+      </div>
+      <div class="transport-row">
+        <button id="shuffleBtn" class="control-btn" type="button" title="Aleatorio" aria-label="Aleatorio">⤨</button>
+        <button id="prevBtn" class="control-btn" type="button" aria-label="Anterior">◀◀</button>
+        <button id="playBtn" class="play-btn" type="button" aria-label="Reproducir">▶</button>
+        <button id="nextBtn" class="control-btn" type="button" aria-label="Siguiente">▶▶</button>
+        <button id="repeatBtn" class="control-btn repeat-btn" type="button" title="Repetición desactivada" aria-label="Modo de repetición">
+          <span class="repeat-symbol">↻</span><small id="repeatBadge"></small>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <audio id="audio" preload="metadata"></audio>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
